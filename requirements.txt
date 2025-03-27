@@ -1,6 +1,7 @@
-tensorflow
-deepface
-opencv-python
+streamlit
+opencv-python-headless
 pandas
 numpy
-streamlit
+deepface
+tensorflow
+keras
