@@ -2,6 +2,6 @@ streamlit
 opencv-python-headless
 pandas
 numpy
-deepface
+deepface==0.0.79
 tensorflow==2.14.0
 keras==2.14.0
