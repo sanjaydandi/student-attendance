@@ -1,0 +1,8 @@
+opencv-python
+deepface
+numpy
+pandas
+pillow
+tk
+threading
+datetime
