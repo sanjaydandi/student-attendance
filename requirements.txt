@@ -10,3 +10,7 @@ retina-face==0.0.14
 protobuf==3.20.3
 h5py==3.8.0
 pillow==9.5.0
+libglib2.0-0
+libsm6
+libxext6
+libxrender1
