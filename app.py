@@ -16,11 +16,12 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 ATTENDANCE_FILE = "attendance.csv"
 EMPLOYEE_FOLDER = "employees"
 
-# Create attendance file if not exists
-if not os.path.exists(ATTENDANCE_FILE):
-    pd.DataFrame(columns=["Name", "Date", "Time"]).to_csv(ATTENDANCE_FILE, index=False)
+def initialize_attendance_file():
+    if not os.path.exists(ATTENDANCE_FILE):
+        pd.DataFrame(columns=["Name", "Date", "Time"]).to_csv(ATTENDANCE_FILE, index=False)
 
-# Load known faces from multiple images per person
+# Load known faces
+
 def load_known_faces():
     known_faces = {}
     if os.path.exists(EMPLOYEE_FOLDER):
@@ -30,38 +31,45 @@ def load_known_faces():
                 known_faces[person] = [os.path.join(person_path, img) for img in os.listdir(person_path) if img.endswith(('jpg', 'png'))]
     return known_faces
 
+initialize_attendance_file()
 known_faces = load_known_faces()
 
 # Initialize session state
 if "attendance_running" not in st.session_state:
     st.session_state.attendance_running = False
+if "marked_today" not in st.session_state:
+    st.session_state.marked_today = set()
 
 def mark_attendance(name):
     """Marks attendance only once per session."""
-    df = pd.read_csv(ATTENDANCE_FILE)
     now = datetime.now()
     date_today = now.strftime("%Y-%m-%d")
     time_now = now.strftime("%H:%M:%S")
 
-    if not ((df["Name"] == name) & (df["Date"] == date_today)).any():
+    if (name, date_today) not in st.session_state.marked_today:
+        df = pd.read_csv(ATTENDANCE_FILE)
         new_entry = pd.DataFrame([[name, date_today, time_now]], columns=["Name", "Date", "Time"])
         df = pd.concat([df, new_entry], ignore_index=True)
         df.to_csv(ATTENDANCE_FILE, index=False)
+        st.session_state.marked_today.add((name, date_today))
         st.success(f"✅ {name} marked at {time_now}")
 
 def process_frame(frame):
     """Runs face recognition in a separate thread."""
     temp_image = "temp.jpg"
     cv2.imwrite(temp_image, frame)
+    
     for name, img_paths in known_faces.items():
+        if (name, datetime.now().strftime("%Y-%m-%d")) in st.session_state.marked_today:
+            continue
         for img_path in img_paths:
             try:
                 result = DeepFace.verify(temp_image, img_path, model_name="VGG-Face", distance_metric="cosine", enforce_detection=False)
                 if result["verified"]:
                     mark_attendance(name)
                     return  # Exit once a match is found
-            except:
-                pass
+            except Exception as e:
+                print(f"Error processing {name}: {e}")
 
 def face_recognition():
     """Runs face recognition with real-time video feed in Streamlit."""
