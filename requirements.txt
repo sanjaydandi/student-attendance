@@ -5,3 +5,4 @@ numpy
 deepface==0.0.79
 tensorflow==2.14.0
 keras==2.14.0
+gdown
